@@ -1,5 +1,6 @@
 import type { DateTime } from 'luxon'
 import type { FastifyInstance } from 'fastify'
+import type { Server as SocketIOServer } from 'socket.io'
 import type { TimeService } from '../../core/services/time'
 import type { NotificationService } from '../../core/services/notifications'
 import type { Scheduler } from '../../core/services/scheduler'
@@ -16,6 +17,7 @@ export interface CoreServices {
     timer: TimerService
     events: EventBus
     db: PrismaClient
+    io: SocketIOServer | null
 }
 
 // ─── Module Contract ──────────────────────────────────────────────────────────

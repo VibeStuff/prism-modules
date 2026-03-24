@@ -69,3 +69,49 @@ model DashboardSetting {
 
   @@map("dashboard_settings")
 }
+
+// ─── AI Dashboard Module ─────────────────────────────────────────────────────
+
+model AIDashboardNewsItem {
+  id         String    @id @default(cuid())
+  title      String
+  body       String
+  bodyFormat String    @default("markdown")
+  category   String?
+  priority   Int       @default(0)
+  imageUrl   String?
+  linkUrl    String?
+  pinned     Boolean   @default(false)
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([pinned, priority, createdAt])
+  @@map("dispatch_news_items")
+}
+
+model AIDashboardWidget {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  type      String
+  title     String
+  content   Json
+  colSpan   Int      @default(1)
+  rowSpan   Int      @default(1)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("dispatch_widgets")
+}
+
+model AIDashboardMeta {
+  id         String   @id @default(cuid())
+  title      String   @default("AI Dashboard")
+  subtitle   String?
+  theme      Json?
+  layoutCols Int      @default(4)
+  updatedAt  DateTime @updatedAt
+
+  @@map("dispatch_meta")
+}
