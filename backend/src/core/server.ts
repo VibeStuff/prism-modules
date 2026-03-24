@@ -109,7 +109,15 @@ async function bootstrap(): Promise<void> {
             socket.join(`user:${userId}`)
             app.log.info(`[Socket.io] User ${userId} joined room user:${userId}`)
         }
+        // Generic room joining for modules (e.g. ai-dashboard:viewers)
+        socket.on('join-room', (room: string) => {
+            if (typeof room === 'string' && /^[a-z][\w:-]{0,63}$/.test(room)) {
+                socket.join(room)
+                app.log.info(`[Socket.io] Socket ${socket.id} joined room ${room}`)
+            }
+        })
     })
+    services.io = io
     services.notify.attachSocket(io)
     app.log.info('[server] Socket.io attached')
 }

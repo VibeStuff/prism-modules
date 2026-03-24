@@ -45,7 +45,7 @@ export async function buildCoreServices(): Promise<CoreServices> {
     // 7. TimeService (needs db for user timezone lookups)
     const time = new TimeService(db)
 
-    _services = { db, events, scheduler, timer, notify, time }
+    _services = { db, events, scheduler, timer, notify, time, io: null }
     console.log('[CoreServices] All services initialized')
 
     return _services

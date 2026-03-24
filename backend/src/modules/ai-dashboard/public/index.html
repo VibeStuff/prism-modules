@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Dashboard — Prism</title>
+  <meta name="description" content="AI-powered dashboard" />
+  <link rel="stylesheet" href="{{ASSETS}}/style.css" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>" />
+</head>
+
+<body>
+
+  <div class="bg-veil"></div>
+
+  <div id="app">
+
+    <!-- HEADER -->
+    <header class="dispatch-header">
+      <div>
+        <div class="dispatch-title" id="dispatch-title">Dispatch</div>
+        <div class="dispatch-subtitle" id="dispatch-subtitle"></div>
+      </div>
+      <div class="dispatch-status">
+        <span class="status-dot" id="status-dot"></span>
+        <span class="status-text" id="status-text">Connecting…</span>
+      </div>
+    </header>
+
+    <!-- WIDGETS -->
+    <section class="widget-grid" id="widget-grid"></section>
+
+    <!-- NEWS -->
+    <section class="news-section" id="news-section">
+      <div class="news-header">
+        <span class="section-title">News</span>
+        <div class="news-filters" id="news-filters"></div>
+      </div>
+      <div class="news-grid" id="news-grid"></div>
+      <div class="news-empty" id="news-empty" style="display:none">
+        <div class="empty-icon">📡</div>
+        <p>Waiting for Dispatch to push content…</p>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="{{ASSETS}}/app.js"></script>
+</body>
+
+</html>
