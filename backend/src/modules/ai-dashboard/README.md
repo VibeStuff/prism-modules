@@ -13,7 +13,7 @@ A dashboard with zero hardcoded content. Every widget, news box, title, and layo
 
 ---
 
-You have access to the Prism AI Dashboard API. This dashboard displays widgets (stat cards, lists, markdown, charts, raw HTML) and news boxes. You control **all** content — nothing is hardcoded. Every visual element is created, updated, or removed by your API calls. The dashboard auto-updates in real time via WebSocket when you push changes.
+You have access to the Prism AI Dashboard API. This dashboard displays widgets (stat cards, lists, markdown, charts, tables, progress bars, countdowns, key-value pairs, images, embeds, and raw HTML) and news boxes. You control **all** content — nothing is hardcoded. Every visual element is created, updated, or removed by your API calls. The dashboard auto-updates in real time via WebSocket when you push changes.
 
 ### Authentication
 
@@ -45,12 +45,25 @@ All endpoints are under `/ai-dashboard`. Example: `http://localhost:3000/ai-dash
   "widgets": [
     {
       "slug": "unique-id (lowercase, alphanumeric + hyphens, e.g. 'weather-today')",
-      "type": "stat | list | markdown | chart | html",
+      "type": "stat | list | markdown | chart | html | progress | table | image | countdown | kv | embed",
       "title": "Widget heading text",
       "content": { "...type-specific payload (see below)..." },
       "colSpan": "integer 1–12 — Grid columns to span (default: 1)",
       "rowSpan": "integer 1–6 — Grid rows to span (default: 1)",
-      "order": "integer — Sort position, lower first (default: 0)"
+      "order": "integer — Sort position, lower first (default: 0)",
+      "visible": "boolean — Show/hide without deleting (default: true)",
+      "icon": "string | null — Emoji/symbol shown next to widget title",
+      "link": "string URL | null — Makes the entire widget card clickable",
+      "style": {
+        "bgColor": "CSS color — Card background",
+        "bgGradient": "CSS gradient — Card background (overrides bgColor)",
+        "headerColor": "CSS color — Widget title color",
+        "textColor": "CSS color — Content text color",
+        "borderColor": "CSS color — Card border color",
+        "accentColor": "CSS color — Accent (progress bars, countdown numbers)",
+        "opacity": "number 0–1 — Card opacity",
+        "padding": "CSS padding value"
+      }
     }
   ],
   "news": [
@@ -164,7 +177,7 @@ All endpoints are under `/ai-dashboard`. Example: `http://localhost:3000/ai-dash
 |-------|------|----------|-------------|
 | `html` | string | **yes** | Raw HTML rendered in a sandboxed iframe. |
 
-#### `chart` — Bar chart
+#### `chart` — Bar, line, pie, or doughnut chart
 
 ```json
 {
@@ -184,12 +197,193 @@ All endpoints are under `/ai-dashboard`. Example: `http://localhost:3000/ai-dash
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `chartType` | `"bar"` | **yes** | Only bar charts supported currently. |
-| `labels` | string[] | **yes** | X-axis labels. |
+| `chartType` | `"bar"` / `"line"` / `"pie"` / `"doughnut"` | **yes** | Chart type. |
+| `labels` | string[] | **yes** | X-axis labels (or slice labels for pie/doughnut). |
 | `datasets` | array | **yes** | Data series. |
 | `datasets[].label` | string | **yes** | Legend label. |
 | `datasets[].data` | number[] | **yes** | Values (length must match labels). |
-| `datasets[].color` | string | no | CSS color for bars. |
+| `datasets[].color` | string | no | CSS color (for bar/line datasets). |
+| `datasets[].colors` | string[] | no | Per-slice colors (for pie/doughnut only). |
+
+**Line chart** renders SVG with area fills, dots, and multi-dataset support.
+**Pie/doughnut** renders SVG with percentage legend. Doughnut has a hollow center.
+
+#### `progress` — Progress bars
+
+```json
+{
+  "slug": "build-progress",
+  "type": "progress",
+  "title": "Build Status",
+  "content": {
+    "bars": [
+      { "label": "Frontend", "value": 87, "max": 100, "color": "#5a8a4a" },
+      { "label": "Backend", "value": 42, "max": 100, "color": "#4a6fa8" },
+      { "label": "Tests", "value": 156, "max": 200 }
+    ]
+  }
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `bars` | array | **yes** | Progress bars to display. |
+| `bars[].value` | number | **yes** | Current value. |
+| `bars[].max` | number | no | Maximum value (default: 100). |
+| `bars[].label` | string | no | Label shown above the bar. |
+| `bars[].color` | string | no | Bar fill color. |
+
+Shorthand: omit `bars` and provide `value`, `max`, `label` directly for a single bar.
+
+#### `table` — Data table
+
+```json
+{
+  "slug": "top-errors",
+  "type": "table",
+  "title": "Top Errors (24h)",
+  "content": {
+    "headers": ["Error", "Count", "Last Seen"],
+    "rows": [
+      ["TypeError: null ref", 142, "2 min ago"],
+      ["NetworkError: timeout", 87, "5 min ago"],
+      ["SyntaxError: JSON", 23, "1h ago"]
+    ],
+    "striped": true
+  },
+  "colSpan": 3
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `headers` | string[] | no | Column headers (sticky on scroll). |
+| `rows` | array[] | **yes** | Row data. Each row is an array of cell values. |
+| `striped` | boolean | no | Alternating row shading (default: true). |
+
+#### `image` — Image display
+
+```json
+{
+  "slug": "daily-graph",
+  "type": "image",
+  "title": "System Load",
+  "content": {
+    "url": "https://example.com/graph.png",
+    "alt": "System load graph",
+    "caption": "Last 24 hours",
+    "fit": "contain"
+  }
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` / `src` | string | **yes** | Image URL. |
+| `alt` | string | no | Alt text. |
+| `caption` | string | no | Caption below the image. |
+| `fit` | string | no | CSS `object-fit` value (default: `"cover"`). |
+
+#### `countdown` — Live countdown timer
+
+```json
+{
+  "slug": "launch-timer",
+  "type": "countdown",
+  "title": "Product Launch",
+  "content": {
+    "target": "2026-04-01T00:00:00Z",
+    "label": "Time until launch",
+    "expired": "Launched!"
+  },
+  "colSpan": 2
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `target` | string (ISO 8601) | **yes** | Countdown target datetime. |
+| `label` | string | no | Description above the timer. |
+| `expired` | string | no | Text shown when countdown reaches zero. |
+
+The timer updates every second with days, hours, minutes, and seconds.
+
+#### `kv` — Key-value pairs
+
+```json
+{
+  "slug": "server-info",
+  "type": "kv",
+  "title": "Server Status",
+  "content": {
+    "pairs": [
+      { "key": "Region", "value": "us-east-1", "icon": "🌎" },
+      { "key": "Uptime", "value": "14d 7h 32m", "icon": "⏱️" },
+      { "key": "Version", "value": "v3.2.1", "icon": "📦", "link": "https://github.com/..." },
+      { "key": "CPU", "value": "23%", "icon": "💻" }
+    ]
+  }
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `pairs` | array | **yes** | Key-value entries. |
+| `pairs[].key` | string | **yes** | Left-side label. |
+| `pairs[].value` | string/number | **yes** | Right-side value. |
+| `pairs[].icon` | string | no | Emoji/symbol prefix for the key. |
+| `pairs[].link` | string (URL) | no | Makes the value a clickable link. |
+
+#### `embed` — External URL iframe
+
+```json
+{
+  "slug": "grafana",
+  "type": "embed",
+  "title": "Metrics",
+  "content": {
+    "url": "https://grafana.example.com/d/abc?orgId=1&kiosk",
+    "height": 300
+  },
+  "colSpan": 4
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `url` | string | **yes** | URL to embed. |
+| `height` | number | no | Iframe height in pixels (default: 200). |
+
+Sandboxed with `allow-scripts allow-same-origin`.
+
+---
+
+### Widget Customization
+
+Every widget supports optional `style`, `icon`, `link`, and `visible` fields:
+
+```json
+{
+  "slug": "revenue",
+  "type": "stat",
+  "title": "Revenue",
+  "icon": "💰",
+  "link": "https://stripe.com/dashboard",
+  "style": {
+    "bgColor": "#1a1a2e",
+    "textColor": "#e0e0e0",
+    "headerColor": "#a0a0a0",
+    "accentColor": "#00d4aa",
+    "borderColor": "#333"
+  },
+  "content": { "value": "$142K", "change": "+8%", "changeDirection": "up" }
+}
+```
+
+- **`visible: false`** hides a widget without deleting it. The GET endpoint filters hidden widgets by default; pass `?all=true` to include them.
+- **`icon`** shows an emoji/symbol next to the widget title.
+- **`link`** makes the entire widget card a clickable link.
+- **`style`** applies per-widget custom colors and appearance.
 
 ---
 
@@ -213,7 +407,7 @@ For granular control beyond bulk push:
 | `POST` | `/ai-dashboard/api/news` | Token | Create one news item. |
 | `PUT` | `/ai-dashboard/api/news/:id` | Token | Partial update by ID. |
 | `DELETE` | `/ai-dashboard/api/news/:id` | Token | Delete by ID. |
-| `GET` | `/ai-dashboard/api/widgets` | Public | List all widgets. |
+| `GET` | `/ai-dashboard/api/widgets?all=true` | Public | List widgets (hidden filtered by default; `?all=true` includes hidden). |
 | `POST` | `/ai-dashboard/api/widgets` | Token | Upsert one widget by slug. |
 | `DELETE` | `/ai-dashboard/api/widgets/:id` | Token | Delete by database ID. |
 | `GET` | `/ai-dashboard/api/meta` | Public | Get dashboard metadata. |
