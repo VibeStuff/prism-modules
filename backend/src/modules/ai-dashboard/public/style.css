@@ -293,6 +293,34 @@ body {
   background: #fff;
 }
 
+/* ── Custom Widget Styling ───────────────────────────── */
+.widget-custom {
+  background: var(--w-bg, var(--cream-80));
+  border-color: var(--w-border, var(--border));
+  color: var(--w-text, var(--text-dark));
+}
+
+.widget-custom .widget-title {
+  color: var(--w-header, var(--text-mid));
+}
+
+.widget-custom .widget-stat-value,
+.widget-custom .widget-markdown,
+.widget-custom .kv-value,
+.widget-custom .widget-table td {
+  color: var(--w-text, var(--text-dark));
+}
+
+.widget-link-wrap {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.widget-title-icon {
+  margin-right: 6px;
+}
+
 /* ── Chart Widget ────────────────────────────────────── */
 .widget-chart {
   width: 100%;
@@ -353,6 +381,255 @@ body {
   width: 8px; height: 8px;
   border-radius: 2px;
   flex-shrink: 0;
+}
+
+/* ── Line Chart ─────────────────────────────────────── */
+.chart-line-svg {
+  width: 100%;
+  height: auto;
+}
+
+/* ── Pie / Doughnut Chart ───────────────────────────── */
+.widget-chart-pie {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.chart-pie-svg {
+  width: 160px;
+  height: 140px;
+  flex-shrink: 0;
+}
+
+.chart-pie-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.75rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.chart-pie-pct {
+  margin-left: auto;
+  font-weight: 500;
+  color: var(--text-dark);
+}
+
+/* ── Progress Widget ────────────────────────────────── */
+.widget-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.progress-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--w-text, var(--text-mid));
+}
+
+.progress-pct {
+  font-weight: 500;
+  color: var(--w-accent, var(--amber));
+}
+
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s var(--ease);
+}
+
+/* ── Table Widget ───────────────────────────────────── */
+.widget-table-wrap {
+  overflow-x: auto;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.widget-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.widget-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--w-header, var(--text-muted));
+  padding: 6px 10px;
+  border-bottom: 2px solid var(--w-border, var(--border));
+  position: sticky;
+  top: 0;
+  background: var(--w-bg, var(--cream-80));
+}
+
+.widget-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--w-text, var(--text-dark));
+}
+
+.widget-table.striped tbody tr:nth-child(even) td {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.widget-table tbody tr:hover td {
+  background: var(--amber-light);
+}
+
+/* ── Image Widget ───────────────────────────────────── */
+.widget-image {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.widget-image img {
+  width: 100%;
+  max-height: 300px;
+  border-radius: var(--radius-sm);
+}
+
+.widget-image-caption {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-align: center;
+  font-style: italic;
+}
+
+/* ── Countdown Widget ───────────────────────────────── */
+.widget-countdown {
+  text-align: center;
+}
+
+.countdown-label {
+  font-size: 0.78rem;
+  color: var(--w-text, var(--text-muted));
+  margin-bottom: 10px;
+}
+
+.countdown-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.countdown-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 44px;
+}
+
+.countdown-num {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.8rem;
+  font-weight: 500;
+  color: var(--w-accent, var(--amber));
+  line-height: 1.1;
+}
+
+.countdown-txt {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-muted);
+}
+
+.countdown-sep {
+  font-size: 1.4rem;
+  color: var(--text-muted);
+  padding-bottom: 14px;
+}
+
+.countdown-expired {
+  display: none;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  color: var(--w-accent, var(--amber));
+  font-weight: 500;
+}
+
+/* ── Key-Value Widget ───────────────────────────────── */
+.widget-kv {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.kv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  transition: background var(--t);
+}
+
+.kv-row:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.kv-key {
+  font-size: 0.78rem;
+  color: var(--w-text, var(--text-muted));
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.kv-icon {
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.kv-value {
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--w-text, var(--text-dark));
+  text-align: right;
+  min-width: 0;
+}
+
+.kv-value a {
+  color: var(--w-accent, var(--amber));
+  text-decoration: none;
+}
+
+.kv-value a:hover {
+  text-decoration: underline;
+}
+
+/* ── Embed Widget ───────────────────────────────────── */
+.widget-embed-frame {
+  border: none;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  background: #fff;
 }
 
 /* ═══════════════════════════════════════════════════════
