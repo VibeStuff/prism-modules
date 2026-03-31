@@ -304,11 +304,157 @@ body {
   color: var(--w-header, var(--text-mid));
 }
 
-.widget-custom .widget-stat-value,
+/* Stat */
+.widget-custom .widget-stat-value {
+  color: var(--w-text, var(--text-dark));
+}
+.widget-custom .widget-stat-label {
+  color: var(--w-text, var(--text-muted));
+  opacity: 0.7;
+}
+.widget-custom .widget-stat-change {
+  color: inherit;
+}
+.widget-custom .widget-stat-change.up {
+  color: #6fdf60;
+  background: rgba(111, 223, 96, 0.15);
+}
+.widget-custom .widget-stat-change.down {
+  color: #ff7b7b;
+  background: rgba(255, 123, 123, 0.15);
+}
+.widget-custom .widget-stat-change.neutral {
+  color: var(--w-text, var(--text-muted));
+  opacity: 0.7;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Markdown */
 .widget-custom .widget-markdown,
-.widget-custom .kv-value,
+.widget-custom .widget-markdown p,
+.widget-custom .widget-markdown li,
+.widget-custom .widget-markdown td {
+  color: var(--w-text, var(--text-dark));
+}
+.widget-custom .widget-markdown h1,
+.widget-custom .widget-markdown h2,
+.widget-custom .widget-markdown h3 {
+  color: var(--w-text, var(--text-dark));
+}
+.widget-custom .widget-markdown a {
+  color: var(--w-accent, var(--amber));
+}
+.widget-custom .widget-markdown blockquote {
+  border-left-color: var(--w-accent, var(--amber));
+  color: var(--w-text, var(--text-mid));
+  opacity: 0.8;
+}
+.widget-custom .widget-markdown code {
+  background: rgba(255, 255, 255, 0.1);
+}
+.widget-custom .widget-markdown pre {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: var(--w-border, var(--border));
+}
+
+/* List */
+.widget-custom .widget-list-item {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--w-text, var(--text-dark));
+}
+.widget-custom .widget-list-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+.widget-custom .widget-list-item a {
+  color: var(--w-accent, var(--amber));
+}
+
+/* Chart */
+.widget-custom .chart-bar-label,
+.widget-custom .chart-legend-item {
+  color: var(--w-text, var(--text-mid));
+  opacity: 0.7;
+}
+.widget-custom .chart-line-svg line {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+.widget-custom .chart-line-svg text {
+  fill: var(--w-text, var(--text-muted));
+  opacity: 0.7;
+}
+.widget-custom .chart-pie-pct {
+  color: var(--w-text, var(--text-dark));
+}
+
+/* Progress */
+.widget-custom .progress-label {
+  color: var(--w-text, var(--text-mid));
+}
+.widget-custom .progress-pct {
+  color: var(--w-accent, var(--amber));
+}
+.widget-custom .progress-track {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Table */
+.widget-custom .widget-table th {
+  color: var(--w-header, var(--text-muted));
+  border-bottom-color: rgba(255, 255, 255, 0.15);
+  background: var(--w-bg, var(--cream-80));
+}
 .widget-custom .widget-table td {
   color: var(--w-text, var(--text-dark));
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+.widget-custom .widget-table.striped tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.04);
+}
+.widget-custom .widget-table tbody tr:hover td {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Image */
+.widget-custom .widget-image-caption {
+  color: var(--w-text, var(--text-muted));
+  opacity: 0.7;
+}
+
+/* Countdown */
+.widget-custom .countdown-label {
+  color: var(--w-text, var(--text-muted));
+  opacity: 0.8;
+}
+.widget-custom .countdown-num {
+  color: var(--w-accent, var(--w-text, #fff));
+}
+.widget-custom .countdown-txt {
+  color: var(--w-text, var(--text-muted));
+  opacity: 0.6;
+}
+.widget-custom .countdown-sep {
+  color: var(--w-text, var(--text-muted));
+  opacity: 0.4;
+}
+.widget-custom .countdown-expired {
+  color: var(--w-accent, var(--amber));
+}
+
+/* Key-Value */
+.widget-custom .kv-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.widget-custom .kv-key {
+  color: var(--w-text, var(--text-muted));
+  opacity: 0.7;
+}
+.widget-custom .kv-value {
+  color: var(--w-text, var(--text-dark));
+}
+.widget-custom .kv-value a {
+  color: var(--w-accent, var(--amber));
 }
 
 .widget-link-wrap {
