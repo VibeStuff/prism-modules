@@ -387,6 +387,17 @@ body {
 .widget-custom .chart-pie-pct {
   color: var(--w-text, var(--text-dark));
 }
+.widget-custom .chart-analytics-item {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.widget-custom .chart-analytics-label {
+  color: var(--w-text, var(--text-muted));
+  opacity: 0.7;
+}
+.widget-custom .chart-analytics-val {
+  color: var(--w-text, var(--text-dark));
+}
 
 /* Progress */
 .widget-custom .progress-label {
@@ -479,6 +490,7 @@ body {
   gap: 3px;
   height: 140px;
   padding-top: 8px;
+  position: relative;
 }
 
 .chart-bar-wrap {
@@ -529,6 +541,17 @@ body {
   flex-shrink: 0;
 }
 
+/* ── Bar Chart Trendline Overlay ────────────────────── */
+.chart-bar-trendline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 20px);
+  pointer-events: none;
+  overflow: visible;
+}
+
 /* ── Line Chart ─────────────────────────────────────── */
 .chart-line-svg {
   width: 100%;
@@ -562,6 +585,41 @@ body {
   margin-left: auto;
   font-weight: 500;
   color: var(--text-dark);
+}
+
+/* ── Chart Analytics Panel ──────────────────────────── */
+.chart-analytics {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.chart-analytics-item {
+  flex: 1;
+  min-width: 52px;
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.chart-analytics-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.chart-analytics-val {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  font-family: 'Playfair Display', Georgia, serif;
 }
 
 /* ── Progress Widget ────────────────────────────────── */
