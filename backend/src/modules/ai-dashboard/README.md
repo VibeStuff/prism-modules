@@ -177,7 +177,7 @@ All endpoints are under `/ai-dashboard`. Example: `http://localhost:3000/ai-dash
 |-------|------|----------|-------------|
 | `html` | string | **yes** | Raw HTML rendered in a sandboxed iframe. |
 
-#### `chart` — Bar, line, pie, or doughnut chart
+#### `chart` — Bar, line, area, scatter, pie, or doughnut chart
 
 ```json
 {
@@ -190,23 +190,53 @@ All endpoints are under `/ai-dashboard`. Example: `http://localhost:3000/ai-dash
     "datasets": [
       { "label": "Production", "data": [3, 5, 2, 8, 4], "color": "#5a8a4a" },
       { "label": "Staging", "data": [7, 4, 6, 3, 9], "color": "#4a6fa8" }
-    ]
+    ],
+    "trendline": true,
+    "analytics": true
   }
 }
 ```
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `chartType` | `"bar"` / `"line"` / `"pie"` / `"doughnut"` | **yes** | Chart type. |
-| `labels` | string[] | **yes** | X-axis labels (or slice labels for pie/doughnut). |
+| `chartType` | `"bar"` / `"line"` / `"area"` / `"scatter"` / `"pie"` / `"doughnut"` | **yes** | Chart type. |
+| `labels` | string[] | **yes*** | X-axis labels (or slice labels for pie/doughnut). *Not required for `scatter`. |
 | `datasets` | array | **yes** | Data series. |
 | `datasets[].label` | string | **yes** | Legend label. |
-| `datasets[].data` | number[] | **yes** | Values (length must match labels). |
-| `datasets[].color` | string | no | CSS color (for bar/line datasets). |
-| `datasets[].colors` | string[] | no | Per-slice colors (for pie/doughnut only). |
+| `datasets[].data` | number[] or `{x,y}`[] | **yes** | Values. Use `{x, y}` objects for `scatter`. |
+| `datasets[].color` | string | no | CSS color (for bar/line/area/scatter). |
+| `datasets[].colors` | string[] | no | Per-slice colors (pie/doughnut only). |
+| `trendline` | boolean | no | Overlay a linear regression trendline on bar, line, area, or scatter charts. |
+| `analytics` | boolean | no | Show a Min / Max / Avg / Sum stats panel below the chart. On line/area charts also draws an average reference line. |
 
-**Line chart** renders SVG with area fills, dots, and multi-dataset support.
+**Line chart** renders SVG with area fills, dots, Y-axis labels, and multi-dataset support.
+**Area chart** is like line but with a more prominent fill — good for showing volume over time.
+**Scatter chart** plots `{x, y}` data points with optional regression trendline. Pass `datasets[].data` as an array of `{x, y}` objects.
 **Pie/doughnut** renders SVG with percentage legend. Doughnut has a hollow center.
+
+**Scatter example:**
+
+```json
+{
+  "slug": "correlation",
+  "type": "chart",
+  "title": "Load vs Response Time",
+  "content": {
+    "chartType": "scatter",
+    "datasets": [
+      {
+        "label": "Servers",
+        "color": "#4a6fa8",
+        "data": [
+          {"x": 10, "y": 120}, {"x": 25, "y": 180}, {"x": 40, "y": 310},
+          {"x": 55, "y": 290}, {"x": 70, "y": 450}, {"x": 85, "y": 520}
+        ]
+      }
+    ],
+    "trendline": true,
+    "analytics": true
+  }
+}
 
 #### `progress` — Progress bars
 
@@ -451,3 +481,192 @@ POST /ai-dashboard/api/news
 - Must start with a letter or number
 - Pattern: `^[a-z0-9][a-z0-9-]*$`
 - Examples: `weather`, `sp500`, `todays-tasks`, `politics-brief`
+
+---
+
+## Style Guide
+
+This guide documents the visual design system used by the AI Dashboard. Use it when customizing widget styles via the `style` field to keep content on-brand.
+
+---
+
+### Color Palette
+
+#### Base Colors
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Cream | `#fffef7` | Page background, card background |
+| Cream 80% | `rgba(255,254,247,0.82)` | Frosted card surface (default) |
+| Cream 60% | `rgba(255,254,247,0.62)` | Lighter frosted surfaces |
+
+#### Text
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Text Dark | `#2a2112` | Primary body text, large values |
+| Text Mid | `#6b5830` | Secondary text, widget titles |
+| Text Muted | `#9e8860` | Labels, timestamps, placeholders |
+
+#### Accent / Brand
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Amber | `#b8831a` | Primary accent — links, active filters, badges |
+| Amber Light | `rgba(184,131,26,0.12)` | Subtle amber tints (hover, code bg) |
+| Amber Glow | `rgba(184,131,26,0.22)` | Glow effects, focus rings |
+
+#### Semantic
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Green | `#5a8a4a` | Positive change, success states, up arrows |
+| Red | `#a84040` | Negative change, error states, down arrows |
+| Blue | `#4a6fa8` | Informational, secondary chart series |
+
+#### Borders
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| Border | `rgba(180,145,60,0.18)` | Default card/row border |
+| Border Hover | `rgba(180,145,60,0.35)` | Hovered card border |
+
+#### Default Chart Series Colors
+
+The chart renderer cycles through these automatically when no `color` is specified per dataset:
+
+```
+#b8831a  #4a6fa8  #5a8a4a  #a84040  #8a5ab8  #4a8a8a  #b85a1a  #1a8ab8
+amber    blue     green    red      purple   teal     burnt    sky
+```
+
+---
+
+### Typography
+
+| Role | Font | Weight | Size |
+|------|------|--------|------|
+| Dashboard title | Playfair Display | 500 | 1.55rem |
+| Widget titles | Playfair Display | 500 | 0.7rem (uppercased, +0.08em spacing) |
+| Section headings | Playfair Display | 500 | 0.93rem |
+| Stat values | Playfair Display | 500 | 2.2rem |
+| Countdown numbers | Playfair Display | 500 | 1.8rem |
+| Body text | Inter | 400 | 0.83rem |
+| Labels / captions | Inter | 400 | 0.78rem |
+| Muted / timestamps | Inter | 300 | 0.7–0.73rem |
+
+**Serif (Playfair Display)** — headings, big numbers, titles. Carries editorial weight.
+**Sans (Inter)** — all other text. Clean, readable at small sizes.
+
+---
+
+### Spacing & Shape
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| Radius | `16px` | Widget cards, news cards |
+| Radius Small | `9px` | Inner elements (progress tracks, table rows, code blocks) |
+| Card padding | `20px` | Default widget card padding |
+| Grid gap | `16px` | Gap between widgets |
+| News grid gap | `12px` | Gap between news cards |
+
+---
+
+### Effects
+
+| Effect | Value | Where |
+|--------|-------|-------|
+| Glassmorphism | `backdrop-filter: blur(22px) saturate(1.4)` | Widget cards, news cards |
+| Default shadow | `0 4px 24px rgba(60,30,0,0.10), 0 1px 0 rgba(255,255,255,0.7) inset` | Cards at rest |
+| Hover shadow | `0 8px 32px rgba(60,30,0,0.16), 0 1px 0 rgba(255,255,255,0.7) inset` | Cards on hover |
+| Transition | `0.22s cubic-bezier(0.4,0,0.2,1)` | All interactive state changes |
+| Entrance animation | `fadeUp` — 0.45s, 14px upward | Widget/news cards on load |
+
+---
+
+### Widget Style Presets
+
+When using `style` on a widget, these combinations produce consistent results:
+
+**Dark card (high contrast)**
+```json
+"style": {
+  "bgColor": "#1a1a2e",
+  "textColor": "#e0e0e0",
+  "headerColor": "#a0a0a0",
+  "accentColor": "#b8831a",
+  "borderColor": "#2e2e4a"
+}
+```
+
+**Amber highlight card**
+```json
+"style": {
+  "bgColor": "rgba(184,131,26,0.08)",
+  "borderColor": "rgba(184,131,26,0.30)",
+  "accentColor": "#b8831a"
+}
+```
+
+**Green success card**
+```json
+"style": {
+  "bgColor": "rgba(90,138,74,0.08)",
+  "borderColor": "rgba(90,138,74,0.25)",
+  "accentColor": "#5a8a4a"
+}
+```
+
+**Red alert card**
+```json
+"style": {
+  "bgColor": "rgba(168,64,64,0.08)",
+  "borderColor": "rgba(168,64,64,0.25)",
+  "accentColor": "#a84040"
+}
+```
+
+**Blue info card**
+```json
+"style": {
+  "bgColor": "rgba(74,111,168,0.08)",
+  "borderColor": "rgba(74,111,168,0.25)",
+  "accentColor": "#4a6fa8"
+}
+```
+
+**Gradient card**
+```json
+"style": {
+  "bgGradient": "linear-gradient(135deg, rgba(184,131,26,0.12) 0%, rgba(255,254,247,0.85) 100%)",
+  "borderColor": "rgba(184,131,26,0.28)"
+}
+```
+
+---
+
+### Layout Conventions
+
+- **Default grid:** 4 columns (`layoutCols: 4`)
+- **KPI row:** Use `colSpan: 1` stat widgets side-by-side
+- **Wide chart:** `colSpan: 2` or `colSpan: 3` for charts with many labels
+- **Full-width:** `colSpan: 4` for tables, embeds, or hero markdown
+- **Tall widget:** `rowSpan: 2` for lists, embeds, or dense charts
+
+**Recommended `layoutCols` values by content density:**
+
+| Cols | Best for |
+|------|----------|
+| 2 | Simple dashboards, mobile-first, 2–4 widgets |
+| 3 | Balanced dashboards, mixed content types |
+| 4 | Dense ops dashboards, many KPI cards (default) |
+| 6 | Wide screens with fine-grained layout control |
+
+---
+
+### Writing Style for Widget Titles
+
+- **All-caps, short:** widget titles are rendered in `0.7rem` with `letter-spacing: 0.08em` — keep them under 4–5 words
+- **Sentence case for values and labels:** stat values, KV pairs, list items
+- **Playfair Display** is used for the title — prefer clean nouns over verbs
+- Use `icon` to add visual hierarchy without adding words: `"icon": "📊"` next to "Revenue"

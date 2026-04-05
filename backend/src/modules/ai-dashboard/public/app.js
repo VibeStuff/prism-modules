@@ -51,6 +51,44 @@ function timeAgo(dateStr) {
 let activeCategory = null
 const CHART_COLORS = ['#b8831a', '#4a6fa8', '#5a8a4a', '#a84040', '#8a5ab8', '#4a8a8a', '#b85a1a', '#1a8ab8']
 
+// ── Chart Math Helpers ──────────────────────────────────
+
+function computeTrendline(data) {
+  const n = data.length
+  if (n < 2) return null
+  const xMean = (n - 1) / 2
+  const yMean = data.reduce((a, b) => a + b, 0) / n
+  let num = 0, den = 0
+  for (let i = 0; i < n; i++) {
+    num += (i - xMean) * (data[i] - yMean)
+    den += (i - xMean) ** 2
+  }
+  const slope = den === 0 ? 0 : num / den
+  return { slope, intercept: yMean - slope * xMean }
+}
+
+function formatAxisVal(v) {
+  if (Math.abs(v) >= 1000000) return (v / 1000000).toFixed(1) + 'M'
+  if (Math.abs(v) >= 1000) return (v / 1000).toFixed(1) + 'K'
+  if (!Number.isInteger(v) && Math.abs(v) < 100) return v.toFixed(1)
+  return String(Math.round(v))
+}
+
+function renderChartAnalytics(datasets) {
+  const allData = datasets.flatMap(d => (d.data || []).map(p => typeof p === 'object' ? p.y : p))
+  if (!allData.length) return ''
+  const min = Math.min(...allData)
+  const max = Math.max(...allData)
+  const avg = allData.reduce((a, b) => a + b, 0) / allData.length
+  const sum = allData.reduce((a, b) => a + b, 0)
+  return `<div class="chart-analytics">
+    <div class="chart-analytics-item"><span class="chart-analytics-label">Min</span><span class="chart-analytics-val">${formatAxisVal(min)}</span></div>
+    <div class="chart-analytics-item"><span class="chart-analytics-label">Max</span><span class="chart-analytics-val">${formatAxisVal(max)}</span></div>
+    <div class="chart-analytics-item"><span class="chart-analytics-label">Avg</span><span class="chart-analytics-val">${formatAxisVal(avg)}</span></div>
+    <div class="chart-analytics-item"><span class="chart-analytics-label">Sum</span><span class="chart-analytics-val">${formatAxisVal(sum)}</span></div>
+  </div>`
+}
+
 // ── Data Loading ────────────────────────────────────────
 
 async function loadMeta() {
@@ -185,14 +223,18 @@ function renderHtmlWidget(c) {
 
 function renderChartWidget(c) {
   const { chartType, labels, datasets } = c
-  if (!labels || !datasets) return `<div class="widget-markdown"><p>Chart: missing data</p></div>`
-  if (chartType === 'bar') return renderBarChart(labels, datasets)
-  if (chartType === 'line') return renderLineChart(labels, datasets)
+  if (!datasets) return `<div class="widget-markdown"><p>Chart: missing data</p></div>`
+  if (chartType === 'scatter') return renderScatterChart(datasets, c)
+  if (!labels) return `<div class="widget-markdown"><p>Chart: missing labels</p></div>`
+  if (chartType === 'bar') return renderBarChart(labels, datasets, c)
+  if (chartType === 'line' || chartType === 'area') return renderLineChart(labels, datasets, c)
   if (chartType === 'pie' || chartType === 'doughnut') return renderPieChart(labels, datasets, chartType)
   return `<div class="widget-markdown"><p>Chart: ${esc(chartType || 'unknown')}</p></div>`
 }
 
-function renderBarChart(labels, datasets) {
+function renderBarChart(labels, datasets, c = {}) {
+  const showTrend = c.trendline === true
+  const showAnalytics = c.analytics === true
   const allValues = datasets.flatMap(d => d.data || [])
   const maxVal = Math.max(...allValues, 1)
 
@@ -207,13 +249,38 @@ function renderBarChart(labels, datasets) {
     })
     html += `<div class="chart-bar-label">${esc(label)}</div></div>`
   })
+
+  // Trendline SVG overlay (positioned absolutely over the bars)
+  if (showTrend) {
+    const lines = datasets.map((ds, di) => {
+      const data = ds.data || []
+      if (data.length < 2) return ''
+      const color = ds.color || CHART_COLORS[di % CHART_COLORS.length]
+      const trend = computeTrendline(data)
+      if (!trend) return ''
+      const n = data.length
+      const x0 = (0.5 / n) * 100
+      const x1 = ((n - 0.5) / n) * 100
+      const y0 = Math.max(0, Math.min(100, 100 - (trend.intercept / maxVal) * 100))
+      const y1 = Math.max(0, Math.min(100, 100 - ((trend.slope * (n - 1) + trend.intercept) / maxVal) * 100))
+      return `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="${color}" stroke-width="2" stroke-dasharray="6,3" opacity="0.85"/>`
+    }).join('')
+    if (lines) {
+      html += `<svg class="chart-bar-trendline" viewBox="0 0 100 100" preserveAspectRatio="none">${lines}</svg>`
+    }
+  }
+
   html += '</div>'
   html += renderChartLegend(datasets)
+  if (showAnalytics) html += renderChartAnalytics(datasets)
   html += '</div>'
   return html
 }
 
-function renderLineChart(labels, datasets) {
+function renderLineChart(labels, datasets, c = {}) {
+  const showTrend = c.trendline === true
+  const showAnalytics = c.analytics === true
+  const isArea = c.chartType === 'area'
   const W = 300, H = 140, PAD = 24
   const allValues = datasets.flatMap(d => d.data || [])
   const maxVal = Math.max(...allValues, 1)
@@ -222,33 +289,58 @@ function renderLineChart(labels, datasets) {
   const stepX = (W - PAD * 2) / Math.max(labels.length - 1, 1)
 
   let svg = `<svg viewBox="0 0 ${W} ${H + 20}" class="chart-line-svg">`
-  // Grid lines
+
+  // Grid lines with Y-axis value labels
   for (let i = 0; i <= 4; i++) {
     const y = PAD + ((H - PAD * 2) * i / 4)
+    const val = maxVal - (range * i / 4)
     svg += `<line x1="${PAD}" y1="${y}" x2="${W - PAD}" y2="${y}" stroke="var(--border)" stroke-width="0.5"/>`
+    svg += `<text x="${PAD - 3}" y="${y + 3}" text-anchor="end" fill="var(--text-muted)" font-size="7">${formatAxisVal(val)}</text>`
+  }
+
+  // Average reference line
+  if (showAnalytics && allValues.length) {
+    const avg = allValues.reduce((a, b) => a + b, 0) / allValues.length
+    const avgY = H - PAD - ((avg - minVal) / range) * (H - PAD * 2)
+    svg += `<line x1="${PAD}" y1="${avgY}" x2="${W - PAD}" y2="${avgY}" stroke="var(--amber)" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>`
+    svg += `<text x="${W - PAD + 3}" y="${avgY + 3}" fill="var(--amber)" font-size="7" opacity="0.8">avg</text>`
   }
 
   datasets.forEach((ds, di) => {
     const color = ds.color || CHART_COLORS[di % CHART_COLORS.length]
-    const points = (ds.data || []).map((val, i) => {
+    const data = ds.data || []
+    const points = data.map((val, i) => {
       const x = PAD + i * stepX
       const y = H - PAD - ((val - minVal) / range) * (H - PAD * 2)
-      return `${x},${y}`
+      return { x, y, val }
     })
-    // Area fill
+    const ptStr = points.map(p => `${p.x},${p.y}`).join(' ')
+
+    // Area fill (more opaque for 'area' type)
     if (points.length > 1) {
-      const first = PAD
-      const last = PAD + (points.length - 1) * stepX
-      svg += `<polygon points="${first},${H - PAD} ${points.join(' ')} ${last},${H - PAD}" fill="${color}" opacity="0.1"/>`
+      const first = points[0].x
+      const last = points[points.length - 1].x
+      svg += `<polygon points="${first},${H - PAD} ${ptStr} ${last},${H - PAD}" fill="${color}" opacity="${isArea ? 0.22 : 0.08}"/>`
     }
     // Line
-    svg += `<polyline points="${points.join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`
+    svg += `<polyline points="${ptStr}" fill="none" stroke="${color}" stroke-width="${isArea ? 2.5 : 2}" stroke-linejoin="round" stroke-linecap="round"/>`
     // Dots
-    ;(ds.data || []).forEach((val, i) => {
-      const x = PAD + i * stepX
-      const y = H - PAD - ((val - minVal) / range) * (H - PAD * 2)
+    points.forEach(({ x, y, val }) => {
       svg += `<circle cx="${x}" cy="${y}" r="3" fill="${color}"><title>${esc(ds.label || '')}: ${val}</title></circle>`
     })
+
+    // Trendline (linear regression)
+    if (showTrend && data.length >= 2) {
+      const trend = computeTrendline(data)
+      if (trend) {
+        const tx0 = PAD
+        const ty0 = H - PAD - ((trend.intercept - minVal) / range) * (H - PAD * 2)
+        const lastIdx = data.length - 1
+        const tx1 = PAD + lastIdx * stepX
+        const ty1 = H - PAD - ((trend.slope * lastIdx + trend.intercept - minVal) / range) * (H - PAD * 2)
+        svg += `<line x1="${tx0}" y1="${ty0}" x2="${tx1}" y2="${ty1}" stroke="${color}" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.7"/>`
+      }
+    }
   })
 
   // X-axis labels
@@ -260,6 +352,74 @@ function renderLineChart(labels, datasets) {
   svg += '</svg>'
   let html = `<div class="widget-chart">${svg}`
   html += renderChartLegend(datasets)
+  if (showAnalytics) html += renderChartAnalytics(datasets)
+  html += '</div>'
+  return html
+}
+
+function renderScatterChart(datasets, c = {}) {
+  const showTrend = c.trendline === true
+  const showAnalytics = c.analytics === true
+  const W = 300, H = 140, PAD = 24
+
+  const allPts = datasets.flatMap(d => d.data || [])
+  const allX = allPts.map(p => typeof p === 'object' ? p.x : 0)
+  const allY = allPts.map(p => typeof p === 'object' ? p.y : Number(p))
+  const maxX = Math.max(...allX, 1), minX = Math.min(...allX, 0)
+  const maxY = Math.max(...allY, 1), minY = Math.min(...allY, 0)
+  const rangeX = maxX - minX || 1, rangeY = maxY - minY || 1
+
+  const toX = x => PAD + ((x - minX) / rangeX) * (W - PAD * 2)
+  const toY = y => H - PAD - ((y - minY) / rangeY) * (H - PAD * 2)
+
+  let svg = `<svg viewBox="0 0 ${W} ${H + 20}" class="chart-line-svg">`
+
+  // Grid with Y-axis labels
+  for (let i = 0; i <= 4; i++) {
+    const y = PAD + ((H - PAD * 2) * i / 4)
+    const val = maxY - (rangeY * i / 4)
+    svg += `<line x1="${PAD}" y1="${y}" x2="${W - PAD}" y2="${y}" stroke="var(--border)" stroke-width="0.5"/>`
+    svg += `<text x="${PAD - 3}" y="${y + 3}" text-anchor="end" fill="var(--text-muted)" font-size="7">${formatAxisVal(val)}</text>`
+  }
+
+  datasets.forEach((ds, di) => {
+    const color = ds.color || CHART_COLORS[di % CHART_COLORS.length]
+    const pts = (ds.data || []).map(p =>
+      typeof p === 'object' ? { sx: toX(p.x), sy: toY(p.y), rx: p.x, ry: p.y } : null
+    ).filter(Boolean)
+
+    pts.forEach(p => {
+      svg += `<circle cx="${p.sx}" cy="${p.sy}" r="4" fill="${color}" opacity="0.75"><title>${esc(ds.label || '')}: (${p.rx}, ${p.ry})</title></circle>`
+    })
+
+    // Trendline (linear regression over x/y pairs)
+    if (showTrend && pts.length >= 2) {
+      const xVals = (ds.data || []).filter(p => typeof p === 'object').map(p => p.x)
+      const yVals = (ds.data || []).filter(p => typeof p === 'object').map(p => p.y)
+      const n = xVals.length
+      const xMean = xVals.reduce((a, b) => a + b, 0) / n
+      const yMean = yVals.reduce((a, b) => a + b, 0) / n
+      let num = 0, den = 0
+      for (let i = 0; i < n; i++) {
+        num += (xVals[i] - xMean) * (yVals[i] - yMean)
+        den += (xVals[i] - xMean) ** 2
+      }
+      const slope = den === 0 ? 0 : num / den
+      const intercept = yMean - slope * xMean
+      svg += `<line x1="${toX(minX)}" y1="${toY(slope * minX + intercept)}" x2="${toX(maxX)}" y2="${toY(slope * maxX + intercept)}" stroke="${color}" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.7"/>`
+    }
+  })
+
+  // X-axis labels (5 ticks)
+  for (let i = 0; i <= 4; i++) {
+    const xVal = minX + (rangeX * i / 4)
+    svg += `<text x="${toX(xVal)}" y="${H + 10}" text-anchor="middle" fill="var(--text-muted)" font-size="8">${formatAxisVal(xVal)}</text>`
+  }
+
+  svg += '</svg>'
+  let html = `<div class="widget-chart">${svg}`
+  html += renderChartLegend(datasets)
+  if (showAnalytics) html += renderChartAnalytics(datasets)
   html += '</div>'
   return html
 }
